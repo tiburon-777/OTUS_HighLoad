@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.3/moment.min.js"></script>
+    </head>
+    <body>
+        <h2>Create account</h2>
+        <form method="POST">
+            <table>
+                <tr>
+                    <td>Логин</td>
+                    <td><input type="text" name="username" /></td>
+                </tr>
+                <tr>
+                    <td>Имя</td>
+                    <td><input type="text" name="name" /></td>
+                </tr>
+                <tr>
+                    <td>Фамилия</td>
+                    <td><input type="text" name="surname" /></td>
+                </tr>
+                <tr>
+                    <td>Дата рождения</td>
+                    <td><input type="date" name="birthdate" placeholder="dd-mm-yyyy" class="form-control" id="date" required /></td>
+                </tr>
+                <tr>
+                    <td>Пол</td>
+                    <td>
+                      <a><input name="gender" type="radio" value="male"> Мужской</a>
+                      <a><input name="gender" type="radio" value="female"> Женский</a>
+                      <a><input name="gender" type="radio" value="other"> Другое</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Интересы</td>
+                    <td><input type="text"name="interests" /></td>
+                </tr>
+                <tr>
+                    <td>Город</td>
+                    <td><input type="text"name="city" /></td>
+                </tr>
+                <tr>
+                    <td>Пароль</td>
+                    <td><input type="password" name="password" /></td>
+                </tr>
+            </table>
+            <button>Sign Up</button>
+        </form>
+    </body>
+</html>

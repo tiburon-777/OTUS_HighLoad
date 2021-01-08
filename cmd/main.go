@@ -55,7 +55,7 @@ func main() {
 
 	// Регистрация пользователя, после которой нас перебрасывает на страницу логина
 	m.Get("/signup", handlers.GetSigned)
-	m.Post("/signup", handlers.PostSigned)
+	m.Post("/signup", binding.Bind(auth.UserModel{}), handlers.PostSigned)
 
 	//Анкета текущего пользователя
 	m.Get("/", auth.LoginRequired, handlers.GetHome)

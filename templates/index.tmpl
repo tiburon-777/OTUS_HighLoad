@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html>
   <body>
-    <p>This is a private link!</p>
-    <p> Hello {{ .Username }}</p>
-    <a href="/logout">Logout</a><br/>
+    <p> Hello <b>{{ .Name }} {{ .Surname }}</b></p>
+    <p>You gender is <b>{{ .Gender }}</b></p>
+    <p>You <b>{{ .BirthDate }}</b> years old</p>
+    <p>You now live in <b>{{ .City }}</b></p>
+    <p>You interests is: <b>{{ .Interests }}</b></p>
+
+    <input type="button" onclick="location.href='/list';" value="User list" />
+    <input type="button" onclick="location.href='/logout';" value="Logout" /><br />
   </body>
 </html>

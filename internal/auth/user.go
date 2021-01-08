@@ -1,24 +1,23 @@
 package auth
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 	"time"
 )
 
 type UserModel struct {
-	Id            int64  `form:"id" db:"id"`
-	Username      string `form:"name" db:"username"`
-	Password      string `form:"password" db:"password"`
-	Name        string		`form:"name" db:"name"`
-	Surname     string		`form:"surname" db:"surname"`
-	BirthDate   time.Time	`form:"birthdate" db:"birthdate"`
-	Male		bool		`form:"male" db:"male"`
-	City		string		`form:"city" db:"city"`
-	Interests	string		`form:"interests" db:"interests"`
-	authenticated bool   `form:"-" db:"-"`
-	Db *sql.DB
+	Id				int64		`db:"id" form:"id"`
+	Username		string		`db:"username" form:"username"`
+	Password		string		`db:"password" form:"password"`
+	Name			string		`db:"name" form:"name"`
+	Surname			string		`db:"surname" form:"surname"`
+	BirthDate		time.Time	`db:"birthdate"`
+	FormBirthDate	string		`form:"birthdate"`
+	Gender			string		`db:"gender" form:"gender"`
+	City			string		`db:"city" form:"city"`
+	Interests		string		`db:"interests" form:"interests"`
+	authenticated	bool		`db:"-" form:"-"`
 }
 
 func GenerateAnonymousUser() User {
@@ -49,11 +48,16 @@ func (u *UserModel) UniqueId() interface{} {
 }
 
 func (u *UserModel) GetById(app application.App, id interface{}) error {
-	query := fmt.Sprintf("SELECT username FROM users WHERE id=%d", id)
-	var v []uint8
-	err := app.DB.QueryRow(query).Scan(&v)
+	var v string
+	query := fmt.Sprintf("SELECT username, name, surname, birthdate, gender, city, interests FROM users WHERE id=%d", id)
+	err := app.DB.QueryRow(query).Scan(&u.Username, &u.Name, &u.Surname, &v, &u.Gender, &u.City, &u.Interests)
 	if err != nil {
 		return err
 	}
+	u.BirthDate, err = time.Parse("2006-01-02 15:04:05", v)
+	if err != nil {
+		return err
+	}
+	u.Id=id.(int64)
 	return nil
 }
