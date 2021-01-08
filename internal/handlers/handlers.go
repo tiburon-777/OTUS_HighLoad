@@ -3,10 +3,9 @@ package handlers
 import (
 	"fmt"
 	"github.com/codegangsta/martini-contrib/render"
-	"github.com/codegangsta/martini-contrib/sessionauth"
 	"github.com/codegangsta/martini-contrib/sessions"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/models"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 	"net"
 	"net/http"
 )
@@ -37,22 +36,22 @@ func GetUserList(r render.Render) {
 	r.HTML(200, "list", doc)
 }
 
-func PostLogin(app application.App, session sessions.Session, postedUser models.UserModel, r render.Render, req *http.Request) {
-	user := models.UserModel{}
+func PostLogin(app application.App, session sessions.Session, postedUser auth.UserModel, r render.Render, req *http.Request) {
+	user := auth.UserModel{}
 	query := fmt.Sprintf("SELECT * FROM users WHERE username=\"%s\" and password =\"%s\"", postedUser.Username, postedUser.Password)
 	err := app.DB.QueryRow(query).Scan(&user.Id, &user.Username, &user.Password)
 
 	if err != nil || user.Id==0 {
-		r.Redirect(sessionauth.RedirectUrl)
+		r.Redirect(auth.RedirectUrl)
 		return
 	} else {
-		err := sessionauth.AuthenticateSession(session, &user)
+		err := auth.AuthenticateSession(session, &user)
 		if err != nil {
 			r.JSON(500, err)
 		}
 
 		params := req.URL.Query()
-		redirect := params.Get(sessionauth.RedirectParam)
+		redirect := params.Get(auth.RedirectParam)
 		r.Redirect(redirect)
 		return
 	}

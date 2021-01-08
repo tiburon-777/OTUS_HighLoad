@@ -3,7 +3,6 @@ package application
 import (
 	"database/sql"
 	"fmt"
-	"github.com/codegangsta/martini"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/models"
 	"github.com/tiburon-777/modules/core/config"
 )
@@ -11,7 +10,6 @@ import (
 type App struct {
 	Config *models.Configuration
 	DB *sql.DB
-	martini.ClassicMartini
 }
 
 func New(configFile, envPrefix string) (App, error) {

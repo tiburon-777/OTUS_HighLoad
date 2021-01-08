@@ -1,9 +1,9 @@
-package models
+package auth
 
 import (
 	"database/sql"
 	"fmt"
-	"github.com/codegangsta/martini-contrib/sessionauth"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 	"time"
 )
 
@@ -18,10 +18,10 @@ type UserModel struct {
 	City		string		`form:"city" db:"city"`
 	Interests	string		`form:"interests" db:"interests"`
 	authenticated bool   `form:"-" db:"-"`
-	Db			*sql.DB
+	Db *sql.DB
 }
 
-func GenerateAnonymousUser() sessionauth.User {
+func GenerateAnonymousUser() User {
 	return &UserModel{}
 }
 
@@ -48,9 +48,10 @@ func (u *UserModel) UniqueId() interface{} {
 	return u.Id
 }
 
-func (u *UserModel) GetById(id interface{}) error {
+func (u *UserModel) GetById(app application.App, id interface{}) error {
 	query := fmt.Sprintf("SELECT username FROM users WHERE id=%d", id)
-	err := u.Db.QueryRow(query).Err()
+	var v []uint8
+	err := app.DB.QueryRow(query).Scan(&v)
 	if err != nil {
 		return err
 	}

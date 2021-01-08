@@ -4,12 +4,11 @@ import (
 	"github.com/codegangsta/martini"
 	"github.com/codegangsta/martini-contrib/binding"
 	"github.com/codegangsta/martini-contrib/render"
-	"github.com/codegangsta/martini-contrib/sessionauth"
 	"github.com/codegangsta/martini-contrib/sessions"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/handlers"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/models"
 	"log"
 	"net"
 	"net/http"
@@ -23,24 +22,23 @@ func init() {
 
 func main() {
 	log.Println("Starting...")
-	app, err := application.New("application.conf", "APP")
-	if err != nil{
-		panic(err.Error())
-	}
-
 	m := martini.Classic()
+	app, err := application.New("application.conf", "APP")
+	if err != nil {
+		log.Fatalf("cn't configure app")
+	}
 
 	m.Map(log.New(os.Stdout, "[app]", log.Lshortfile))
 	m.Map(app)
 	m.Use(sessions.Sessions("app", sessions.NewCookieStore([]byte("BfyfgIyngIOUgmOIUgt87thrg5RHn78b"))))
-	m.Use(sessionauth.SessionUser(models.GenerateAnonymousUser))
+	m.Use(auth.SessionUser(auth.GenerateAnonymousUser))
 	m.Use(render.Renderer(render.Options{
 		Directory: "templates",
 		Extensions: []string{".tmpl"},
 	}))
 
-	sessionauth.RedirectUrl = "/login"
-	sessionauth.RedirectParam = "next"
+	auth.RedirectUrl = "/login"
+	auth.RedirectParam = "next"
 
 	m.Get("/404", func(r render.Render) {
 		r.HTML(200, "404", nil)
@@ -48,10 +46,10 @@ func main() {
 	m.Get("/login", func(r render.Render) {
 		r.HTML(200, "login", nil)
 	})
-	m.Post("/login", binding.Bind(models.UserModel{}), handlers.PostLogin)
+	m.Post("/login", binding.Bind(auth.UserModel{}), handlers.PostLogin)
 
-	m.Get("/logout", sessionauth.LoginRequired, func(session sessions.Session, user sessionauth.User, r render.Render) {
-		sessionauth.Logout(session, user)
+	m.Get("/logout", auth.LoginRequired, func(session sessions.Session, user auth.User, r render.Render) {
+		auth.Logout(session, user)
 		r.Redirect("/")
 	})
 
@@ -60,9 +58,9 @@ func main() {
 	m.Post("/signup", handlers.PostSigned)
 
 	//Анкета текущего пользователя
-	m.Get("/", sessionauth.LoginRequired, handlers.GetHome)
+	m.Get("/", auth.LoginRequired, handlers.GetHome)
 
-	m.Get("/list", sessionauth.LoginRequired, handlers.GetUserList)
+	m.Get("/list", auth.LoginRequired, handlers.GetUserList)
 
 	m.NotFound(func(r render.Render) {
 		r.HTML(404, "404", nil)
