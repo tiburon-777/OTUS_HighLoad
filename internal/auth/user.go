@@ -7,18 +7,19 @@ import (
 )
 
 type UserModel struct {
-	Id				int64		`db:"id" form:"id"`
-	Username		string		`db:"username" form:"username"`
-	Password		string		`db:"password" form:"password"`
-	Name			string		`db:"name" form:"name"`
-	Surname			string		`db:"surname" form:"surname"`
-	BirthDate		time.Time	`db:"birthdate"`
-	YearsOld		int			`db:"-" form:"-"`
-	FormBirthDate	string		`form:"birthdate"`
-	Gender			string		`db:"gender" form:"gender"`
-	City			string		`db:"city" form:"city"`
-	Interests		string		`db:"interests" form:"interests"`
-	authenticated	bool		`db:"-" form:"-"`
+	Id            int64     `db:"id" form:"id"`
+	Username      string    `db:"username" form:"username"`
+	Password      string    `db:"password" form:"password"`
+	Name          string    `db:"name" form:"name"`
+	Surname       string    `db:"surname" form:"surname"`
+	BirthDate     time.Time `db:"birthdate"`
+	YearsOld      int       `db:"-" form:"-"`
+	FormBirthDate string    `form:"birthdate"`
+	Gender        string    `db:"gender" form:"gender"`
+	City          string    `db:"city" form:"city"`
+	Interests     string    `db:"interests" form:"interests"`
+	IsFriend      bool      `db:"-" form:"-"`
+	authenticated bool      `db:"-" form:"-"`
 }
 
 func GenerateAnonymousUser() User {
@@ -59,6 +60,6 @@ func (u *UserModel) GetById(app application.App, id interface{}) error {
 	if err != nil {
 		return err
 	}
-	u.Id=id.(int64)
+	u.Id = id.(int64)
 	return nil
 }

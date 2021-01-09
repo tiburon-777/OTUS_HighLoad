@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/codegangsta/martini"
 	"github.com/codegangsta/martini-contrib/binding"
 	"github.com/codegangsta/martini-contrib/render"
@@ -25,7 +26,7 @@ func main() {
 	m := martini.Classic()
 	app, err := application.New("application.conf", "APP")
 	if err != nil {
-		log.Fatalf("cn't configure app")
+		log.Fatal(fmt.Errorf("can't build app: %w", err).Error())
 	}
 
 	m.Map(log.New(os.Stdout, "[app]", log.Lshortfile))
@@ -33,7 +34,7 @@ func main() {
 	m.Use(sessions.Sessions("app", sessions.NewCookieStore([]byte("BfyfgIyngIOUgmOIUgt87thrg5RHn78b"))))
 	m.Use(auth.SessionUser(auth.GenerateAnonymousUser))
 	m.Use(render.Renderer(render.Options{
-		Directory: "templates",
+		Directory:  "templates",
 		Extensions: []string{".tmpl"},
 	}))
 
@@ -56,6 +57,9 @@ func main() {
 	// Регистрация пользователя, после которой нас перебрасывает на страницу логина
 	m.Get("/signup", handlers.GetSignup)
 	m.Post("/signup", binding.Bind(auth.UserModel{}), handlers.PostSignup)
+
+	m.Get("/subscribe", handlers.GetSubscribe)
+	m.Get("/unsubscribe", handlers.GetUnSubscribe)
 
 	//Анкета текущего пользователя
 	m.Get("/", auth.LoginRequired, handlers.GetHome)

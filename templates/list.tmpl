@@ -26,6 +26,7 @@
                     <th>Years Old</th>
                     <th>Gender</th>
                     <th>City</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,10 +36,13 @@
                         <td><a>{{ $value.YearsOld }}</a></td>
                         <td><a>{{ $value.Gender }}</a></td>
                         <td><a>{{ $value.City }}</a></td>
+                        <td><a href="/subscribe?id={{ $value.Id }}">Subscribe</a></td>
                     </tr>
                 {{ end }}
             </tbody>
         </table>
+
+        <h2>Available actions:</h2>
         <input type="button" onclick="location.href='/';" value="Home" />
     </body>
 </html>

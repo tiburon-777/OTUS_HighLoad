@@ -9,13 +9,50 @@ import (
 	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
-func GetHome(r render.Render, user auth.User) {
+func GetHome(app application.App, r render.Render, user auth.User) {
 	h := user.(*auth.UserModel).BirthDate
-	user.(*auth.UserModel).YearsOld = int(time.Since(h).Hours()/8760)
-	r.HTML(200, "index",  user)
+	user.(*auth.UserModel).YearsOld = int(time.Since(h).Hours() / 8760)
+	doc := make(map[string]interface{})
+	doc["user"] = user.(*auth.UserModel)
+	var users []auth.UserModel
+	var tmp auth.UserModel
+	var tmpTime string
+	query := fmt.Sprintf(`SELECT
+			users.id as id,
+			users.name as name,
+			users.surname as surname,
+			users.birthdate as birthdate,
+			users.gender as gender,
+			users.city as city
+		FROM
+			users JOIN relations
+		WHERE
+			relations.friendId=users.Id
+			AND relations.userId="%s"
+		GROUP BY users.Id`,
+		strconv.Itoa(int(user.(*auth.UserModel).Id)),
+	)
+	var results, err = app.DB.Query(query)
+	if err != nil || results == nil {
+		err500("can't get user list from DB: ", err, r)
+	}
+	defer results.Close()
+	for results.Next() {
+		err = results.Scan(&tmp.Id, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
+		if err != nil {
+			err500("can't scan result from DB: ", err, r)
+		}
+		tmp.BirthDate = str2Time(tmpTime, r)
+		tmp.YearsOld = int(time.Since(tmp.BirthDate).Hours() / 8760)
+		users = append(users, tmp)
+	}
+	doc["table"] = users
+
+	r.HTML(200, "index", doc)
 }
 
 func GetSignup(r render.Render) {
@@ -35,7 +72,7 @@ func PostSignup(app application.App, postedUser auth.UserModel, r render.Render)
 	query := fmt.Sprintf(`INSERT INTO users (username, password, name, surname, birthdate, gender, city, interests)
 							values ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")`,
 		postedUser.Username,
-		base64.StdEncoding.EncodeToString([]byte(postedUser.Username + ":" + postedUser.Password)),
+		base64.StdEncoding.EncodeToString([]byte(postedUser.Username+":"+postedUser.Password)),
 		postedUser.Name,
 		postedUser.Surname,
 		t.Format("2006-01-02 15:04:05"),
@@ -52,35 +89,35 @@ func PostSignup(app application.App, postedUser auth.UserModel, r render.Render)
 
 func GetUserList(app application.App, user auth.User, r render.Render) {
 	doc := make(map[string]interface{})
-	doc["user"]=user.(*auth.UserModel)
+	doc["user"] = user.(*auth.UserModel)
 	var users []auth.UserModel
 	var tmp auth.UserModel
 	var tmpTime string
-	var results, err = app.DB.Query(`SELECT name, surname, birthdate, gender, city FROM users`)
-	if err != nil || results==nil {
+	var results, err = app.DB.Query(`SELECT id, name, surname, birthdate, gender, city FROM users`)
+	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
 	}
-	defer  results.Close()
+	defer results.Close()
 	for results.Next() {
-		err = results.Scan(&tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
+		err = results.Scan(&tmp.Id, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
 		if err != nil {
 			err500("can't scan result from DB: ", err, r)
 		}
 		tmp.BirthDate = str2Time(tmpTime, r)
-		tmp.YearsOld = int(time.Since(tmp.BirthDate).Hours()/8760)
-		users = append(users,tmp)
+		tmp.YearsOld = int(time.Since(tmp.BirthDate).Hours() / 8760)
+		users = append(users, tmp)
 	}
-	doc["table"]=users
+	doc["table"] = users
 	r.HTML(200, "list", doc)
 }
 
 func PostLogin(app application.App, session sessions.Session, postedUser auth.UserModel, r render.Render, req *http.Request) {
-	hash :=  base64.StdEncoding.EncodeToString([]byte(postedUser.Username + ":" + postedUser.Password))
+	hash := base64.StdEncoding.EncodeToString([]byte(postedUser.Username + ":" + postedUser.Password))
 	user := auth.UserModel{}
 	query := fmt.Sprintf("SELECT id FROM users WHERE username=\"%s\" and password =\"%s\"", postedUser.Username, hash)
 	err := app.DB.QueryRow(query).Scan(&user.Id)
 
-	if err != nil || user.Id==0 {
+	if err != nil || user.Id == 0 {
 		r.Redirect(auth.RedirectUrl)
 		return
 	} else {
@@ -93,6 +130,47 @@ func PostLogin(app application.App, session sessions.Session, postedUser auth.Us
 		r.Redirect(redirect)
 		return
 	}
+}
+
+func GetSubscribe(app application.App, r render.Render, user auth.User, req *http.Request) {
+	sid, ok := req.URL.Query()["id"]
+	if !ok {
+		err500("can't parce URL query", nil, r)
+	}
+	did, err := strconv.Atoi(sid[0])
+	if err != nil {
+		err500("can't convert URL query value: ", err, r)
+	}
+	query := fmt.Sprintf(`REPLACE INTO relations (userId, friendId) values ("%d", "%d")`,
+		user.(*auth.UserModel).Id,
+		did,
+	)
+	_, err = app.DB.Exec(query)
+	if err != nil {
+		err500("can't create relation in DB: ", err, r)
+	}
+	r.Redirect("/list")
+}
+
+func GetUnSubscribe(app application.App, r render.Render, user auth.User, req *http.Request) {
+	sid, ok := req.URL.Query()["id"]
+	if !ok {
+		err500("can't parce URL query", nil, r)
+	}
+	did, err := strconv.Atoi(sid[0])
+	if err != nil {
+		err500("can't convert URL query value: ", err, r)
+	}
+	query := fmt.Sprintf(`DELETE FROM relations WHERE userId="%d" AND friendId="%d"`,
+		user.(*auth.UserModel).Id,
+		did,
+	)
+	_, err = app.DB.Exec(query)
+	if err != nil {
+		err500("can't remove relation from DB: ", err, r)
+	}
+	r.Redirect("/")
+
 }
 
 func str2Time(s string, r render.Render) time.Time {

@@ -2,12 +2,12 @@ package auth
 
 import (
 	"fmt"
-"github.com/codegangsta/martini"
-"github.com/codegangsta/martini-contrib/render"
-"github.com/codegangsta/martini-contrib/sessions"
+	"github.com/codegangsta/martini"
+	"github.com/codegangsta/martini-contrib/render"
+	"github.com/codegangsta/martini-contrib/sessions"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 	"log"
-"net/http"
+	"net/http"
 )
 
 // These are the default configuration values for this package. They
@@ -100,4 +100,3 @@ func UpdateUser(s sessions.Session, user User) error {
 	s.Set(SessionKey, user.UniqueId())
 	return nil
 }
-
