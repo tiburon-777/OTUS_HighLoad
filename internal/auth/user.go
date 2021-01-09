@@ -13,6 +13,7 @@ type UserModel struct {
 	Name			string		`db:"name" form:"name"`
 	Surname			string		`db:"surname" form:"surname"`
 	BirthDate		time.Time	`db:"birthdate"`
+	YearsOld		int			`db:"-" form:"-"`
 	FormBirthDate	string		`form:"birthdate"`
 	Gender			string		`db:"gender" form:"gender"`
 	City			string		`db:"city" form:"city"`
