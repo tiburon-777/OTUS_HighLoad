@@ -24,7 +24,7 @@ func init() {
 func main() {
 	log.Println("Starting...")
 	m := martini.Classic()
-	app, err := application.New("application.conf", "APP")
+	app, err := application.New("", "APP")
 	if err != nil {
 		log.Fatal(fmt.Errorf("can't build app: %w", err).Error())
 	}
