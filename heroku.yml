@@ -1,2 +1,3 @@
-run:
-  web: docker-compose -f ./cicd/docker-compose.yml up -d --build
+build:
+  docker:
+    web: cicd/app/Dockerfile
