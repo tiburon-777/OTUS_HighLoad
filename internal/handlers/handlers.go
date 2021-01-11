@@ -93,7 +93,26 @@ func GetUserList(app application.App, user auth.User, r render.Render) {
 	var users []auth.UserModel
 	var tmp auth.UserModel
 	var tmpTime string
-	var results, err = app.DB.Query(`SELECT id, name, surname, birthdate, gender, city FROM users`)
+	query := fmt.Sprintf(`SELECT
+			users.id as id,
+			users.name as name,
+			users.surname as surname,
+			users.birthdate as birthdate,
+			users.gender as gender,
+			users.city as city
+		FROM
+			users
+		WHERE
+			NOT users.id=%d     
+			AND users.id NOT IN ( 
+				SELECT
+					relations.friendId
+				FROM
+					relations
+				WHERE
+					relations.userId=%d)`, int(user.(*auth.UserModel).Id), int(user.(*auth.UserModel).Id))
+
+	var results, err = app.DB.Query(query)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
 	}
