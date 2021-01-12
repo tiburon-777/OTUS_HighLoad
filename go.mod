@@ -10,4 +10,5 @@ require (
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/sessions v1.2.1 // indirect
 	github.com/tiburon-777/modules v0.0.0-20201210103219-a0362a8da783
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 )

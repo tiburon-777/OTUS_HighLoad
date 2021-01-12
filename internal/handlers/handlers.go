@@ -1,12 +1,13 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"fmt"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/codegangsta/martini-contrib/sessions"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
+	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,7 +22,7 @@ func GetHome(app application.App, r render.Render, user auth.User) {
 	var users []auth.UserModel
 	var tmp auth.UserModel
 	var tmpTime string
-	query := fmt.Sprintf(`SELECT
+	var results, err = app.DB.Query(`SELECT
 			users.id as id,
 			users.name as name,
 			users.surname as surname,
@@ -32,11 +33,9 @@ func GetHome(app application.App, r render.Render, user auth.User) {
 			users JOIN relations
 		WHERE
 			relations.friendId=users.Id
-			AND relations.userId="%s"
+			AND relations.userId=?
 		GROUP BY users.Id`,
-		strconv.Itoa(int(user.(*auth.UserModel).Id)),
-	)
-	var results, err = app.DB.Query(query)
+		user.(*auth.UserModel).Id)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
 	}
@@ -60,6 +59,13 @@ func GetSignup(r render.Render) {
 }
 
 func PostSignup(app application.App, postedUser auth.UserModel, r render.Render) {
+	if len(postedUser.Username) < 3 || len(postedUser.Password) < 3 {
+		doc := map[string]interface{}{
+			"msg": "Login and password must be longer then 3 chars",
+		}
+		r.HTML(200, "signup", doc)
+		return
+	}
 	t, err := time.Parse("2006-1-2", postedUser.FormBirthDate)
 	if err != nil {
 		e := fmt.Errorf("can't parce date: %w", err)
@@ -69,10 +75,14 @@ func PostSignup(app application.App, postedUser auth.UserModel, r render.Render)
 		}
 		r.HTML(500, "500", doc)
 	}
-	query := fmt.Sprintf(`INSERT INTO users (username, password, name, surname, birthdate, gender, city, interests)
-							values ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s")`,
+	pHash, err := bcrypt.GenerateFromPassword([]byte(postedUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		err500("can't generate password hash: ", err, r)
+	}
+	_, err = app.DB.Exec(`INSERT INTO users (username, password, name, surname, birthdate, gender, city, interests)
+							values (?, ?, ?, ?, ?, ?, ?, ?)`,
 		postedUser.Username,
-		base64.StdEncoding.EncodeToString([]byte(postedUser.Username+":"+postedUser.Password)),
+		pHash,
 		postedUser.Name,
 		postedUser.Surname,
 		t.Format("2006-01-02 15:04:05"),
@@ -80,7 +90,6 @@ func PostSignup(app application.App, postedUser auth.UserModel, r render.Render)
 		postedUser.City,
 		postedUser.Interests,
 	)
-	_, err = app.DB.Exec(query)
 	if err != nil {
 		err500("can't create account in DB: ", err, r)
 	}
@@ -93,7 +102,7 @@ func GetUserList(app application.App, user auth.User, r render.Render) {
 	var users []auth.UserModel
 	var tmp auth.UserModel
 	var tmpTime string
-	query := fmt.Sprintf(`SELECT
+	var results, err = app.DB.Query(`SELECT
 			users.id as id,
 			users.name as name,
 			users.surname as surname,
@@ -103,16 +112,17 @@ func GetUserList(app application.App, user auth.User, r render.Render) {
 		FROM
 			users
 		WHERE
-			NOT users.id=%d     
+			NOT users.id=?     
 			AND users.id NOT IN ( 
 				SELECT
 					relations.friendId
 				FROM
 					relations
 				WHERE
-					relations.userId=%d)`, int(user.(*auth.UserModel).Id), int(user.(*auth.UserModel).Id))
-
-	var results, err = app.DB.Query(query)
+					relations.userId=?)`,
+		user.(*auth.UserModel).Id,
+		user.(*auth.UserModel).Id,
+	)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
 	}
@@ -131,12 +141,14 @@ func GetUserList(app application.App, user auth.User, r render.Render) {
 }
 
 func PostLogin(app application.App, session sessions.Session, postedUser auth.UserModel, r render.Render, req *http.Request) {
-	hash := base64.StdEncoding.EncodeToString([]byte(postedUser.Username + ":" + postedUser.Password))
 	user := auth.UserModel{}
-	query := fmt.Sprintf("SELECT id FROM users WHERE username=\"%s\" and password =\"%s\"", postedUser.Username, hash)
-	err := app.DB.QueryRow(query).Scan(&user.Id)
-
-	if err != nil || user.Id == 0 {
+	err1 := app.DB.QueryRow("SELECT id, password FROM users WHERE username=?", postedUser.Username).Scan(&user.Id, &user.Password)
+	err2 := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(postedUser.Password))
+	if err1 != nil || err2 != nil {
+		doc := map[string]interface{}{
+			"msg": "Wrong user or password. You may sign in.",
+		}
+		r.HTML(200, "login", doc)
 		r.Redirect(auth.RedirectUrl)
 		return
 	} else {
@@ -160,11 +172,11 @@ func GetSubscribe(app application.App, r render.Render, user auth.User, req *htt
 	if err != nil {
 		err500("can't convert URL query value: ", err, r)
 	}
-	query := fmt.Sprintf(`REPLACE INTO relations (userId, friendId) values ("%d", "%d")`,
-		user.(*auth.UserModel).Id,
-		did,
-	)
-	_, err = app.DB.Exec(query)
+	_, err = app.DB.Exec(`REPLACE INTO relations (userId, friendId) values (?, ?)`, user.(*auth.UserModel).Id, did)
+	if err != nil {
+		err500("can't create relation in DB: ", err, r)
+	}
+	_, err = app.DB.Exec(`REPLACE INTO relations (userId, friendId) values (?, ?)`, did, user.(*auth.UserModel).Id)
 	if err != nil {
 		err500("can't create relation in DB: ", err, r)
 	}
@@ -180,11 +192,7 @@ func GetUnSubscribe(app application.App, r render.Render, user auth.User, req *h
 	if err != nil {
 		err500("can't convert URL query value: ", err, r)
 	}
-	query := fmt.Sprintf(`DELETE FROM relations WHERE userId="%d" AND friendId="%d"`,
-		user.(*auth.UserModel).Id,
-		did,
-	)
-	_, err = app.DB.Exec(query)
+	_, err = app.DB.Exec(`DELETE FROM relations WHERE (userId,friendId) IN ((?, ?),(?, ?))`, user.(*auth.UserModel).Id, did, did, user.(*auth.UserModel).Id)
 	if err != nil {
 		err500("can't remove relation from DB: ", err, r)
 	}
