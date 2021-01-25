@@ -26,6 +26,9 @@ func New(configFile, envPrefix string) (App, error) {
 	if err = dbInit(db); err != nil {
 		return App{}, err
 	}
+	if err = dbFill(db); err != nil {
+		return App{}, err
+	}
 	return App{Config: conf, DB: db}, nil
 }
 
@@ -69,6 +72,13 @@ func dbInit(db *sql.DB) error {
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8`); err != nil {
 		return err
 	}
+	log.Println("All tables exists")
+	return nil
+}
+
+func dbFill(db *sql.DB) error {
+	log.Println("Try to generate rows and fill the DB...")
+
 	log.Println("All tables exists")
 	return nil
 }
