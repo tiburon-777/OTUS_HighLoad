@@ -200,6 +200,14 @@ func GetUnSubscribe(app application.App, r render.Render, user auth.User, req *h
 
 }
 
+func GetSearch(r render.Render) {
+	r.HTML(200, "search", nil)
+}
+
+func PostSearch()  {
+
+}
+
 func str2Time(s string, r render.Render) time.Time {
 	t, err := time.Parse("2006-01-02 15:04:05", s)
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/handlers"
+	"github.com/tiburon-777/OTUS_HighLoad/pkg/dataset"
 	"log"
 	"net"
 	"net/http"
@@ -28,6 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("can't build app: %w", err).Error())
 	}
+	go dataset.FillDB(app.DB, 1000000)
 
 	m.Map(log.New(os.Stdout, "[app]", log.Lshortfile))
 	m.Map(app)
@@ -65,6 +67,9 @@ func main() {
 	m.Get("/", auth.LoginRequired, handlers.GetHome)
 
 	m.Get("/list", auth.LoginRequired, handlers.GetUserList)
+
+	m.Get("/search", auth.LoginRequired, handlers.GetSearch)
+	m.Post("/search", auth.LoginRequired, handlers.PostSearch)
 
 	m.NotFound(func(r render.Render) {
 		r.HTML(404, "404", nil)
