@@ -60,13 +60,13 @@ func dbInit(db *sql.DB) error {
 			City varchar(255) DEFAULT NULL,
 			Interests varchar(255) DEFAULT NULL,
 			PRIMARY KEY (Id)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8`); err != nil {
+		) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci`); err != nil {
 		return err
 	}
 	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS relations (
 		userId int(11) DEFAULT NULL,
 		friendId int(11) DEFAULT NULL
-	) ENGINE=InnoDB DEFAULT CHARSET=utf8`); err != nil {
+	) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci`); err != nil {
 		return err
 	}
 	log.Println("All tables exists")
