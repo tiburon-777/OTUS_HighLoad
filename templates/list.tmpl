@@ -18,7 +18,17 @@
         </style>
     </head>
     <body>
-        <h2>List of all unrelated users</h2>
+        <h2>Search users</h2>
+        <form method="POST">
+            <div>
+                <td><b>Поиск по префиксу имени и(или) фамилии</b></td>
+                <td><input type="text" name="pref" /></td>
+                <td><button>Search</button></td>
+            </div>
+        </form>
+        <br />
+            <div><b>Выбрано {{ .UsersFound }} учеток из {{ .UsersTotal }}</b>  <b style="color: red;">{{ .msg }}</b></div>
+        <br />
         <table>
             <thead>
                 <tr>

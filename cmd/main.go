@@ -67,9 +67,7 @@ func main() {
 	m.Get("/", auth.LoginRequired, handlers.GetHome)
 
 	m.Get("/list", auth.LoginRequired, handlers.GetUserList)
-
-	m.Get("/search", auth.LoginRequired, handlers.GetSearch)
-	m.Post("/search", auth.LoginRequired, handlers.PostSearch)
+	m.Post("/list", auth.LoginRequired, handlers.PostUserList)
 
 	m.NotFound(func(r render.Render) {
 		r.HTML(404, "404", nil)

@@ -96,7 +96,19 @@ func PostSignup(app application.App, postedUser auth.UserModel, r render.Render)
 	r.Redirect("/login")
 }
 
-func GetUserList(app application.App, user auth.User, r render.Render) {
+func GetUserList(app application.App, r render.Render) {
+	doc := make(map[string]interface{})
+	doc["UsersFound"] = 0
+	var tmp int
+	if err := app.DB.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&tmp); err != nil {
+		err500("can't get total of user profiles from DB: ", err, r)
+	}
+	doc["UsersTotal"] = tmp
+	r.HTML(200, "list", doc)
+}
+
+func PostUserList(app application.App, user auth.User, r render.Render, req *http.Request) {
+	pref := req.FormValue("pref")
 	doc := make(map[string]interface{})
 	doc["user"] = user.(*auth.UserModel)
 	var users []auth.UserModel
@@ -119,9 +131,12 @@ func GetUserList(app application.App, user auth.User, r render.Render) {
 				FROM
 					relations
 				WHERE
-					relations.userId=?)`,
+					relations.userId=?)
+			AND ( users.Name LIKE concat(?, '%') OR users.Surname LIKE concat(?, '%') )`,
 		user.(*auth.UserModel).Id,
 		user.(*auth.UserModel).Id,
+		pref,
+		pref,
 	)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
@@ -135,8 +150,18 @@ func GetUserList(app application.App, user auth.User, r render.Render) {
 		tmp.BirthDate = str2Time(tmpTime, r)
 		tmp.YearsOld = int(time.Since(tmp.BirthDate).Hours() / 8760)
 		users = append(users, tmp)
+		if len(users) >= 100 {
+			doc["msg"] = "( Too much rows in result. We will display only the first 100. )"
+			break
+		}
 	}
 	doc["table"] = users
+	doc["UsersFound"] = len(users)
+	var uTotal int
+	if err := app.DB.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&uTotal); err != nil {
+		err500("can't get total of user profiles from DB: ", err, r)
+	}
+	doc["UsersTotal"] = uTotal
 	r.HTML(200, "list", doc)
 }
 
@@ -197,14 +222,6 @@ func GetUnSubscribe(app application.App, r render.Render, user auth.User, req *h
 		err500("can't remove relation from DB: ", err, r)
 	}
 	r.Redirect("/")
-
-}
-
-func GetSearch(r render.Render) {
-	r.HTML(200, "search", nil)
-}
-
-func PostSearch()  {
 
 }
 
