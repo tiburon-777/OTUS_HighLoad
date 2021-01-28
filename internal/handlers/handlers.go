@@ -165,6 +165,53 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 	r.HTML(200, "list", doc)
 }
 
+func PostUserSearch(app application.App, r render.Render, req *http.Request) {
+	pref := req.FormValue("pref")
+	doc := make(map[string]interface{})
+	var users []auth.UserModel
+	var tmp auth.UserModel
+	var tmpTime string
+	var results, err = app.DB.Query(`SELECT
+			users.id as id,
+			users.name as name,
+			users.surname as surname,
+			users.birthdate as birthdate,
+			users.gender as gender,
+			users.city as city
+		FROM
+			users
+		WHERE
+		  	( users.Name LIKE concat(?, '%') OR users.Surname LIKE concat(?, '%') )`,
+		pref,
+		pref,
+	)
+	if err != nil || results == nil {
+		err500("can't get user list from DB: ", err, r)
+	}
+	defer results.Close()
+	for results.Next() {
+		err = results.Scan(&tmp.Id, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
+		if err != nil {
+			err500("can't scan result from DB: ", err, r)
+		}
+		tmp.BirthDate = str2Time(tmpTime, r)
+		tmp.YearsOld = int(time.Since(tmp.BirthDate).Hours() / 8760)
+		users = append(users, tmp)
+		if len(users) >= 100 {
+			doc["msg"] = "( Too much rows in result. We will display only the first 100. )"
+			break
+		}
+	}
+	doc["table"] = users
+	doc["UsersFound"] = len(users)
+	var uTotal int
+	if err := app.DB.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&uTotal); err != nil {
+		err500("can't get total of user profiles from DB: ", err, r)
+	}
+	doc["UsersTotal"] = uTotal
+	r.HTML(200, "list", doc)
+}
+
 func PostLogin(app application.App, session sessions.Session, postedUser auth.UserModel, r render.Render, req *http.Request) {
 	user := auth.UserModel{}
 	err1 := app.DB.QueryRow("SELECT id, password FROM users WHERE username=?", postedUser.Username).Scan(&user.Id, &user.Password)
