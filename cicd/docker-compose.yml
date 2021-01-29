@@ -12,6 +12,7 @@ services:
       MYSQL_USER: app
       MYSQL_PASSWORD: app
     volumes:
+      - /opt/mysql:/var/lib/mysql
       - ./dbinit:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
