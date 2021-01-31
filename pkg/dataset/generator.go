@@ -43,12 +43,16 @@ func NewPerson() (p Person) {
 }
 
 func FillDB(db *sql.DB, lim int) {
-	log.Println("Try to drop table USERS...")
-	if _, err := db.Exec(`DELETE FROM users`); err != nil {
-		log.Fatalf("can't exec query: %s", err.Error())
+	var uCount int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&uCount); err != nil {
+		log.Fatalf("can't get total of user profiles from DB: ")
 	}
-	log.Printf("Try to generate %d rows and fill the DB...", lim)
-	for i := 1; i < lim; i++ {
+	uCount = lim - uCount
+	if uCount <= 0 {
+		log.Printf("Ok. We have more users then %s.", lim)
+	}
+	log.Printf("Try to generate %d rows and fill the DB...", uCount)
+	for i := 1; i < uCount; i++ {
 		if i%100 == 0 {
 			log.Printf("Successfully inserted %d rows", i)
 		}
@@ -63,7 +67,7 @@ func FillDB(db *sql.DB, lim int) {
 			p.City,
 			strings.Join(p.Interests, ","),
 		); err != nil {
-			log.Fatalf("can't insert row in DB. Inserted %d rows of %d: %s", i, lim, err.Error())
+			log.Fatalf("can't insert row in DB. Inserted %d rows of %d: %s", i, uCount, err.Error())
 		}
 	}
 	log.Println("Table USERS filled successfully")
