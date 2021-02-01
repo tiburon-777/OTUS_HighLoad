@@ -108,7 +108,8 @@ func GetUserList(app application.App, r render.Render) {
 }
 
 func PostUserList(app application.App, user auth.User, r render.Render, req *http.Request) {
-	pref := req.FormValue("pref")
+	postName := req.FormValue("name")
+	postSurname := req.FormValue("surname")
 	doc := make(map[string]interface{})
 	doc["user"] = user.(*auth.UserModel)
 	var users []auth.UserModel
@@ -132,11 +133,11 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 					relations
 				WHERE
 					relations.userId=?)
-			AND ( users.Name LIKE concat(?, '%') OR users.Surname LIKE concat(?, '%') )`,
+			AND ( users.Name LIKE concat(?, '%') AND users.Surname LIKE concat(?, '%') )`,
 		user.(*auth.UserModel).Id,
 		user.(*auth.UserModel).Id,
-		pref,
-		pref,
+		postName,
+		postSurname,
 	)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
@@ -166,7 +167,8 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 }
 
 func PostUserSearch(app application.App, r render.Render, req *http.Request) {
-	pref := req.FormValue("pref")
+	postName := req.FormValue("name")
+	postSurname := req.FormValue("surname")
 	doc := make(map[string]interface{})
 	var users []auth.UserModel
 	var tmp auth.UserModel
@@ -181,9 +183,9 @@ func PostUserSearch(app application.App, r render.Render, req *http.Request) {
 		FROM
 			users
 		WHERE
-		  	( users.Name LIKE concat(?, '%') OR users.Surname LIKE concat(?, '%') )`,
-		pref,
-		pref,
+		  	( users.Name LIKE concat(?, '%') AND users.Surname LIKE concat(?, '%') )`,
+		postName,
+		postSurname,
 	)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
