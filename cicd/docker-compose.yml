@@ -2,7 +2,7 @@ version: '3'
 services:
 
   mysql_master:
-    image: mysql:5.7
+    image: actency/docker-mysql-replication:5.7
     hostname: "mysql_master"
     container_name: mysql_master
     restart: always
@@ -11,17 +11,14 @@ services:
       MYSQL_USER: app
       MYSQL_PASSWORD: app
       MYSQL_DATABASE: app
-      MYSQL_PORT: 3306
-      MYSQL_LOWER_CASE_TABLE_NAMES: 0
-    ports:
-      - 13306:3306
+      REPLICATION_USER: replication_user
+      REPLICATION_PASSWORD: myreplpassword
     volumes:
-      - ./mysql/mysql_master.conf:/etc/mysql/conf.d/mysql.conf.cnf
       - /opt/mysql_master:/var/lib/mysql
       - ./mysql/master_init:/docker-entrypoint-initdb.d
 
   mysql_slave:
-    image: mysql:5.7
+    image: actency/docker-mysql-replication:5.7
     hostname: "mysql_slave"
     container_name: mysql_slave
     restart: always
@@ -30,16 +27,13 @@ services:
       MYSQL_USER: app
       MYSQL_PASSWORD: app
       MYSQL_DATABASE: app
-      MYSQL_PORT: 3306
-      MYSQL_LOWER_CASE_TABLE_NAMES: 0
-    ports:
-      - 23306:3306
+      REPLICATION_USER: replication_user
+      REPLICATION_PASSWORD: myreplpassword
+      MASTER_HOST: mysql_master
     depends_on:
       - mysql_master
     volumes:
-      - ./mysql/mysql_slave.conf:/etc/mysql/conf.d/mysql.conf.cnf
       - /opt/mysql_slave:/var/lib/mysql
-      - ./mysql/slave_init:/docker-entrypoint-initdb.d
 
   app:
     build:
