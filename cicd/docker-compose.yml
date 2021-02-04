@@ -1,22 +1,45 @@
 version: '3'
 services:
-  mysql:
-    image: mysql:5.6
-    hostname: "mysql"
-    container_name: mysql
-    command: --default-authentication-plugin=mysql_native_password
+
+  mysql_master:
+    image: mysql:5.7
+    hostname: "mysql_master"
+    container_name: mysql_master
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: app
       MYSQL_USER: app
       MYSQL_PASSWORD: app
-    volumes:
-      - /opt/mysql:/var/lib/mysql
-      - ./dbinit:/docker-entrypoint-initdb.d
+      MYSQL_DATABASE: app
+      MYSQL_PORT: 3306
+      MYSQL_LOWER_CASE_TABLE_NAMES: 0
     ports:
-      - "3306:3306"
+      - 13306:3306
+    volumes:
+      - ./mysql/mysql_master.conf:/etc/mysql/conf.d/mysql.conf.cnf
+      - /opt/mysql_master:/var/lib/mysql
+      - ./mysql/master_init:/docker-entrypoint-initdb.d
 
+  mysql_slave:
+    image: mysql:5.7
+    hostname: "mysql_slave"
+    container_name: mysql_slave
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+      MYSQL_DATABASE: app
+      MYSQL_PORT: 3306
+      MYSQL_LOWER_CASE_TABLE_NAMES: 0
+    ports:
+      - 23306:3306
+    depends_on:
+      - mysql_master
+    volumes:
+      - ./mysql/mysql_slave.conf:/etc/mysql/conf.d/mysql.conf.cnf
+      - /opt/mysql_slave:/var/lib/mysql
+      - ./mysql/slave_init:/docker-entrypoint-initdb.d
 
   app:
     build:
@@ -26,8 +49,8 @@ services:
     environment:
       APP_SERVER_ADDRESS: 0.0.0.0
       APP_SERVER_PORT: 8080
-      APP_DSN_HOST: mysql
-      APP_DSN_PORT: 3306
+      APP_DSN_HOST: mysql_master
+      APP_DSN_PORT: 13306
       APP_DSN_USER: app
       APP_DSN_PASS: app
       APP_DSN_BASE: app
