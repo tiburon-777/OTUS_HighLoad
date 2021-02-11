@@ -1,14 +1,18 @@
 cdir = $(shell pwd)
 
 up:
-	sudo -S docker-compose -f ./cicd/docker-compose.yml up -d --build
-
+	docker-compose -f ./cicd/docker-compose.yml up -d --build
+	./cicd/init.sh
 down: shutdown clean
 
 shutdown:
-	sudo -S docker-compose -f ./cicd/docker-compose.yml down
+	docker-compose -f ./cicd/docker-compose.yml down
+	sudo docker rmi $$(sudo docker images -a | grep '<none>' | awk '{print $$3}')
 
 clean:
-	sudo docker rmi $(sudo docker images | grep '<none>' | awk '{print $3}')
+	rm -rf /opt/mysql_master/* ; \
+	rm -rf /opt/mysql_slave1/* ; \
+	rm -rf /opt/mysql_slave2/* ; \
+	sudo docker rmi $$(sudo docker images -a | grep '<none>' | awk '{print $$3}')
 
 .PHONY: up down

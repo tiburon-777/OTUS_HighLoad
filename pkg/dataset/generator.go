@@ -30,9 +30,13 @@ func NewPerson() (p Person) {
 		p.FirstName = womanNames[rand.Intn(len(womanNames))]
 		p.SecondName = secondNames[rand.Intn(len(secondNames))] + "а"
 	}
-	t := make([]byte, 16)
-	rand.Read(t)
-	p.Password = string(t)
+	charSet := "abcdedfghijklmnopqrstABCDEFGHIJKLMNOP0123456789"
+	var output strings.Builder
+	for i := 0; i < 16; i++ {
+		random := rand.Intn(len(charSet))
+		output.WriteString(string(charSet[random]))
+	}
+	p.Password = output.String()
 	p.City = cities[rand.Intn(len(cities))]
 	for i := 0; i < (rand.Intn(4) + 3); i++ {
 		p.Interests = append(p.Interests, interests[rand.Intn(len(interests))])

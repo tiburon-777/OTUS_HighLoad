@@ -1,59 +1,45 @@
 #!/bin/bash
 
-  mysql:
-    image: mysql:5.6
-    hostname: "mysql"
-    container_name: mysql
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: app
-      MYSQL_USER: app
-      MYSQL_PASSWORD: app
-    volumes:
-      - /opt/mysql:/var/lib/mysql
-      - ./dbinit:/docker-entrypoint-initdb.d
-    ports:
-      - "3306:3306"
-
-
-
-
-
-docker-compose down
-rm -rf ./master/data/*
-rm -rf ./slave/data/*
-docker-compose build
-docker-compose up -d
-
-until docker exec mysql_master sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"'
+until docker exec mysql_master sh -c 'export MYSQL_PWD=root; mysql -u root -e ";"'
 do
     echo "Waiting for mysql_master database connection..."
     sleep 4
 done
 
-priv_stmt='GRANT REPLICATION SLAVE ON *.* TO "mydb_slave_user"@"%" IDENTIFIED BY "mydb_slave_pwd"; FLUSH PRIVILEGES;'
-docker exec mysql_master sh -c "export MYSQL_PWD=111; mysql -u root -e '$priv_stmt'"
+priv_stmt='CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8 COLLATE utf8_general_ci; GRANT ALL ON app.* TO "app"@"%" IDENTIFIED BY "app"; GRANT REPLICATION SLAVE ON *.* TO "mydb_slave_user"@"%" IDENTIFIED BY "mydb_slave_pwd"; FLUSH PRIVILEGES;'
+docker exec mysql_master sh -c "export MYSQL_PWD=root; mysql -u root -e '$priv_stmt'"
 
-until docker-compose exec mysql_slave sh -c 'export MYSQL_PWD=111; mysql -u root -e ";"'
+until docker exec mysql_slave1 sh -c 'export MYSQL_PWD=root; mysql -u root -e ";"'
 do
-    echo "Waiting for mysql_slave database connection..."
+    echo "Waiting for mysql_slave1 database connection..."
     sleep 4
 done
+
+until docker exec mysql_slave2 sh -c 'export MYSQL_PWD=root; mysql -u root -e ";"'
+do
+    echo "Waiting for mysql_slave2 database connection..."
+    sleep 4
+done
+
+priv_stmt='CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8 COLLATE utf8_general_ci; GRANT ALL ON app.* TO "app"@"%" IDENTIFIED BY "app"; FLUSH PRIVILEGES;'
+docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e '$priv_stmt'"
+docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e '$priv_stmt'"
 
 docker-ip() {
     docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$@"
 }
 
-MS_STATUS=`docker exec mysql_master sh -c 'export MYSQL_PWD=111; mysql -u root -e "SHOW MASTER STATUS"'`
-CURRENT_LOG=`echo $MS_STATUS | awk '{print $6}'`
-CURRENT_POS=`echo $MS_STATUS | awk '{print $7}'`
+MS_STATUS=`docker exec mysql_master sh -c 'export MYSQL_PWD=root; mysql -u root -e "SHOW MASTER STATUS"' | grep mysq`
+CURRENT_LOG=`echo $MS_STATUS | awk '{print $1}'`
+CURRENT_POS=`echo $MS_STATUS | awk '{print $2}'`
 
 start_slave_stmt="CHANGE MASTER TO MASTER_HOST='$(docker-ip mysql_master)',MASTER_USER='mydb_slave_user',MASTER_PASSWORD='mydb_slave_pwd',MASTER_LOG_FILE='$CURRENT_LOG',MASTER_LOG_POS=$CURRENT_POS; START SLAVE;"
-start_slave_cmd='export MYSQL_PWD=111; mysql -u root -e "'
+start_slave_cmd='export MYSQL_PWD=root; mysql -u root -e "'
 start_slave_cmd+="$start_slave_stmt"
 start_slave_cmd+='"'
-docker exec mysql_slave sh -c "$start_slave_cmd"
 
-docker exec mysql_slave sh -c "export MYSQL_PWD=111; mysql -u root -e 'SHOW SLAVE STATUS \G'"
+docker exec mysql_slave1 sh -c "$start_slave_cmd"
+docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW SLAVE STATUS \G' | grep Slave_"
+
+docker exec mysql_slave2 sh -c "$start_slave_cmd"
+docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW SLAVE STATUS \G' | grep Slave_"

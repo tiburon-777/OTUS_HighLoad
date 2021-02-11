@@ -19,7 +19,7 @@ func New(configFile, envPrefix string) (App, error) {
 		return App{}, fmt.Errorf("can't apply config: %w\n", err)
 	}
 
-	db, err := sql.Open("mysql", conf.DSN.User+":"+conf.DSN.Pass+"@tcp("+conf.DSN.Host+":"+conf.DSN.Port+")/"+conf.DSN.Base)
+	db, err := sql.Open("mysql", conf.DSN.User+":"+conf.DSN.Pass+"@tcp("+conf.DSN.Host+":"+conf.DSN.Port+")/"+conf.DSN.Base+"?charset=utf8&collation=utf8_unicode_ci")
 	if err != nil {
 		return App{}, err
 	}
@@ -60,7 +60,7 @@ func dbInit(db *sql.DB) error {
 			City varchar(255) DEFAULT NULL,
 			Interests varchar(255) DEFAULT NULL,
 			PRIMARY KEY (Id)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8`); err != nil {
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE utf8_unicode_ci`); err != nil {
 		return err
 	}
 	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS relations (
