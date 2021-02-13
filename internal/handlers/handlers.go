@@ -22,7 +22,7 @@ func GetHome(app application.App, r render.Render, user auth.User) {
 	var users []auth.UserModel
 	var tmp auth.UserModel
 	var tmpTime string
-	var results, err = app.DB.Query(`SELECT
+	var results, err = app.DBMaster.Query(`SELECT
 			users.id as id,
 			users.name as name,
 			users.surname as surname,
@@ -79,7 +79,7 @@ func PostSignup(app application.App, postedUser auth.UserModel, r render.Render)
 	if err != nil {
 		err500("can't generate password hash: ", err, r)
 	}
-	_, err = app.DB.Exec(`INSERT INTO users (username, password, name, surname, birthdate, gender, city, interests)
+	_, err = app.DBMaster.Exec(`INSERT INTO users (username, password, name, surname, birthdate, gender, city, interests)
 							values (?, ?, ?, ?, ?, ?, ?, ?)`,
 		postedUser.Username,
 		pHash,
@@ -100,7 +100,7 @@ func GetUserList(app application.App, r render.Render) {
 	doc := make(map[string]interface{})
 	doc["UsersFound"] = 0
 	var tmp int
-	if err := app.DB.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&tmp); err != nil {
+	if err := app.DBMaster.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&tmp); err != nil {
 		err500("can't get total of user profiles from DB: ", err, r)
 	}
 	doc["UsersTotal"] = tmp
@@ -115,7 +115,7 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 	var users []auth.UserModel
 	var tmp auth.UserModel
 	var tmpTime string
-	var results, err = app.DB.Query(`SELECT
+	var results, err = app.DBMaster.Query(`SELECT
 			users.id as id,
 			users.name as name,
 			users.surname as surname,
@@ -159,7 +159,7 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 	doc["table"] = users
 	doc["UsersFound"] = len(users)
 	var uTotal int
-	if err := app.DB.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&uTotal); err != nil {
+	if err := app.DBMaster.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&uTotal); err != nil {
 		err500("can't get total of user profiles from DB: ", err, r)
 	}
 	doc["UsersTotal"] = uTotal
@@ -167,13 +167,18 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 }
 
 func PostUserSearch(app application.App, r render.Render, req *http.Request) {
+	db := app.DBMaster
+	if app.Config.DSN.Slave1!="" {
+		db = app.DBSlave1
+	}
+
 	postName := req.FormValue("name")
 	postSurname := req.FormValue("surname")
 	doc := make(map[string]interface{})
 	var users []auth.UserModel
 	var tmp auth.UserModel
 	var tmpTime string
-	var results, err = app.DB.Query(`SELECT
+	var results, err = db.Query(`SELECT
 			users.id as id,
 			users.name as name,
 			users.surname as surname,
@@ -207,7 +212,7 @@ func PostUserSearch(app application.App, r render.Render, req *http.Request) {
 	doc["table"] = users
 	doc["UsersFound"] = len(users)
 	var uTotal int
-	if err := app.DB.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&uTotal); err != nil {
+	if err := db.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&uTotal); err != nil {
 		err500("can't get total of user profiles from DB: ", err, r)
 	}
 	doc["UsersTotal"] = uTotal
@@ -216,7 +221,7 @@ func PostUserSearch(app application.App, r render.Render, req *http.Request) {
 
 func PostLogin(app application.App, session sessions.Session, postedUser auth.UserModel, r render.Render, req *http.Request) {
 	user := auth.UserModel{}
-	err1 := app.DB.QueryRow("SELECT id, password FROM users WHERE username=?", postedUser.Username).Scan(&user.Id, &user.Password)
+	err1 := app.DBMaster.QueryRow("SELECT id, password FROM users WHERE username=?", postedUser.Username).Scan(&user.Id, &user.Password)
 	err2 := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(postedUser.Password))
 	if err1 != nil || err2 != nil {
 		doc := map[string]interface{}{
@@ -246,11 +251,11 @@ func GetSubscribe(app application.App, r render.Render, user auth.User, req *htt
 	if err != nil {
 		err500("can't convert URL query value: ", err, r)
 	}
-	_, err = app.DB.Exec(`REPLACE INTO relations (userId, friendId) values (?, ?)`, user.(*auth.UserModel).Id, did)
+	_, err = app.DBMaster.Exec(`REPLACE INTO relations (userId, friendId) values (?, ?)`, user.(*auth.UserModel).Id, did)
 	if err != nil {
 		err500("can't create relation in DB: ", err, r)
 	}
-	_, err = app.DB.Exec(`REPLACE INTO relations (userId, friendId) values (?, ?)`, did, user.(*auth.UserModel).Id)
+	_, err = app.DBMaster.Exec(`REPLACE INTO relations (userId, friendId) values (?, ?)`, did, user.(*auth.UserModel).Id)
 	if err != nil {
 		err500("can't create relation in DB: ", err, r)
 	}
@@ -266,7 +271,7 @@ func GetUnSubscribe(app application.App, r render.Render, user auth.User, req *h
 	if err != nil {
 		err500("can't convert URL query value: ", err, r)
 	}
-	_, err = app.DB.Exec(`DELETE FROM relations WHERE (userId,friendId) IN ((?, ?),(?, ?))`, user.(*auth.UserModel).Id, did, did, user.(*auth.UserModel).Id)
+	_, err = app.DBMaster.Exec(`DELETE FROM relations WHERE (userId,friendId) IN ((?, ?),(?, ?))`, user.(*auth.UserModel).Id, did, did, user.(*auth.UserModel).Id)
 	if err != nil {
 		err500("can't remove relation from DB: ", err, r)
 	}

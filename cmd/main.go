@@ -29,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("can't build app: %w", err).Error())
 	}
-	go dataset.FillDB(app.DB, 1000000)
+	go dataset.FillDB(app.DBMaster, 1000000)
 
 	m.Map(log.New(os.Stdout, "[app]", log.Lshortfile))
 	m.Map(app)

@@ -1,8 +1,8 @@
 package models
 
 type Configuration struct {
-	Server Server
-	DSN    DSN
+	Server	Server
+	DSN		DSN
 }
 
 type Server struct {
@@ -11,9 +11,11 @@ type Server struct {
 }
 
 type DSN struct {
-	Host string
-	Port string
-	User string
-	Pass string
-	Base string
+	Master	string
+	Slave1	string
+	Slave2	string
+	Port	string
+	User	string
+	Pass	string
+	Base	string
 }

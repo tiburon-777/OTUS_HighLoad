@@ -52,7 +52,7 @@ func (u *UserModel) UniqueId() interface{} {
 func (u *UserModel) GetById(app application.App, id interface{}) error {
 	var v string
 	query := fmt.Sprintf("SELECT username, name, surname, birthdate, gender, city, interests FROM users WHERE id=%d", id)
-	err := app.DB.QueryRow(query).Scan(&u.Username, &u.Name, &u.Surname, &v, &u.Gender, &u.City, &u.Interests)
+	err := app.DBMaster.QueryRow(query).Scan(&u.Username, &u.Name, &u.Surname, &v, &u.Gender, &u.City, &u.Interests)
 	if err != nil {
 		return err
 	}

@@ -10,23 +10,38 @@ import (
 
 type App struct {
 	Config *models.Configuration
-	DB     *sql.DB
+	DBMaster     *sql.DB
+	DBSlave1     *sql.DB
+	DBSlave2     *sql.DB
 }
 
-func New(configFile, envPrefix string) (App, error) {
-	conf, err := configure(configFile, envPrefix)
+func New(configFile, envPrefix string) (app App, err error) {
+	app.Config, err = configure(configFile, envPrefix)
 	if err != nil {
 		return App{}, fmt.Errorf("can't apply config: %w\n", err)
 	}
 
-	db, err := sql.Open("mysql", conf.DSN.User+":"+conf.DSN.Pass+"@tcp("+conf.DSN.Host+":"+conf.DSN.Port+")/"+conf.DSN.Base+"?charset=utf8&collation=utf8_unicode_ci")
+	app.DBMaster, err = sql.Open("mysql", app.Config.DSN.User+":"+app.Config.DSN.Pass+"@tcp("+app.Config.DSN.Master+":"+app.Config.DSN.Port+")/"+app.Config.DSN.Base+"?charset=utf8&collation=utf8_unicode_ci")
 	if err != nil {
 		return App{}, err
 	}
-	if err = dbInit(db); err != nil {
+	if err = dbInit(app.DBMaster); err != nil {
 		return App{}, err
 	}
-	return App{Config: conf, DB: db}, nil
+	if app.Config.DSN.Slave1 != "" {
+		app.DBSlave1, err = sql.Open("mysql", app.Config.DSN.User+":"+app.Config.DSN.Pass+"@tcp("+app.Config.DSN.Slave1+":"+app.Config.DSN.Port+")/"+app.Config.DSN.Base+"?charset=utf8&collation=utf8_unicode_ci")
+		if err != nil {
+			return App{}, err
+		}
+	}
+
+	if app.Config.DSN.Slave2 != "" {
+		app.DBSlave2, err = sql.Open("mysql", app.Config.DSN.User+":"+app.Config.DSN.Pass+"@tcp("+app.Config.DSN.Slave2+":"+app.Config.DSN.Port+")/"+app.Config.DSN.Base+"?charset=utf8&collation=utf8_unicode_ci")
+		if err != nil {
+			return App{}, err
+		}
+	}
+	return app, nil
 }
 
 func configure(fileName string, envPrefix string) (*models.Configuration, error) {
