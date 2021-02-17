@@ -1,0 +1,18 @@
+version: '3'
+services:
+
+  app:
+    build:
+      context: ..
+      dockerfile: ./cicd/app/Dockerfile
+    restart: always
+    environment:
+      APP_SERVER_ADDRESS: 0.0.0.0
+      APP_SERVER_PORT: 8080
+      APP_DSN_MASTER: mysql_master
+      APP_DSN_PORT: 3306
+      APP_DSN_USER: app
+      APP_DSN_PASS: app
+      APP_DSN_BASE: app
+    ports:
+      - "8080:8080"
