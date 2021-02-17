@@ -1,20 +1,18 @@
 cdir = $(shell pwd)
 
 app-up:
-	docker-compose -f ./cicd/dc_app.yml up -d --build ; \
+	docker-compose -f ./cicd/dc_app.yml up -d --build
 
 app-down:
-	docker-compose -f ./cicd/dc_app.yml down ; \
+	docker-compose -f ./cicd/dc_app.yml down
 
-app-reload:
-	docker-compose -f ./cicd/dc_app.yml down ; \
-	docker-compose -f ./cicd/dc_app.yml up -d
+app-reload: app-down app-up
 
 db-up:
 	rm -rf /opt/mysql_slave1/* ; \
 	rm -rf /opt/mysql_slave2/* ; \
 	docker-compose -f ./cicd/dc_db.yml up -d --build ; \
-	./cicd/init.sh ; \
+	./cicd/init.sh
 
 db-down:
 	docker-compose -f ./cicd/dc_db.yml down
@@ -23,7 +21,7 @@ prom-up:
 	docker-compose -f ./test/monitor/docker-compose.yml up -d --build
 
 prom-down:
-	docker-compose -f ./test/monitor/docker-compose.yml down ; \
+	docker-compose -f ./test/monitor/docker-compose.yml down
 
 up: db-up app-up prom-up
 

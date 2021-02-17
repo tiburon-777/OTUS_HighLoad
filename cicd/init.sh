@@ -6,7 +6,7 @@ do
     sleep 4
 done
 
-priv_stmt='CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8 COLLATE utf8_general_ci; GRANT ALL ON app.* TO "app"@"%" IDENTIFIED BY "app"; GRANT REPLICATION SLAVE ON *.* TO "mydb_slave_user"@"%" IDENTIFIED BY "mydb_slave_pwd"; FLUSH PRIVILEGES;'
+priv_stmt='INSTALL PLUGIN rpl_semi_sync_master SONAME "semisync_master.so"; CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8 COLLATE utf8_general_ci; GRANT ALL ON app.* TO "app"@"%" IDENTIFIED BY "app"; GRANT REPLICATION SLAVE ON *.* TO "mydb_slave_user"@"%" IDENTIFIED BY "mydb_slave_pwd"; FLUSH PRIVILEGES;'
 docker exec mysql_master sh -c "export MYSQL_PWD=root; mysql -u root -e '$priv_stmt'"
 
 until docker exec mysql_slave1 sh -c 'export MYSQL_PWD=root; mysql -u root -e ";"'
@@ -21,7 +21,7 @@ do
     sleep 4
 done
 
-priv_stmt='CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8 COLLATE utf8_general_ci; GRANT ALL ON app.* TO "app"@"%" IDENTIFIED BY "app"; FLUSH PRIVILEGES;'
+priv_stmt='INSTALL PLUGIN rpl_semi_sync_slave SONAME "semisync_slave.so"; CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8 COLLATE utf8_general_ci; GRANT ALL ON app.* TO "app"@"%" IDENTIFIED BY "app"; FLUSH PRIVILEGES;'
 docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e '$priv_stmt'"
 docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e '$priv_stmt'"
 

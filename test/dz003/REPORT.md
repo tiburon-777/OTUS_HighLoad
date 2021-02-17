@@ -130,34 +130,16 @@ binlog_do_db = app
 ### 5. Настроить 2 слейва и 1 мастер.
 Пропускаю этот пункт, т.к. все уже было сделано в п.1
 ### 6. Включить row-based репликацию.
-- #### Добавляем в my.cnf мастера строки:
+- #### Добавляем в my.cnf мастера и обоих слейвов, строки:
     ```
     binlog_format=ROW
     binlog-checksum=crc32
-    ```
-- #### Добавляем в my.cnf обоих слейвов строки:
-    ```
-    binlog_format=ROW
-    binlog-checksum=crc32
-    ```
-- #### Запускаем кластер и приложение:
-    ```
-    sudo make app-up
     ```
 ### 7. Включить GTID.
-- #### Добавляем в my.cnf мастера строки:
+- #### Добавляем в my.cnf мастера и обоих слейвов, строки:
     ```
     gtid-mode=on
     enforce-gtid-consistency=true
-    ```
-- #### Добавляем в my.cnf обоих слейвов строки:
-    ```
-    gtid-mode=on
-    enforce-gtid-consistency=true
-    ```
-- #### Запускаем кластер и приложение:
-    ```
-    sudo make app-up
     ```
 ### 8. Настроить полусинхронную репликацию.
 - #### Включаем динамическую загрузку модулей и полусинхронную репликацию с таймаутом 1с в my.cnf на мастере:
@@ -173,11 +155,11 @@ binlog_do_db = app
     ```
 - #### Устанавливаем semisync плагин на мастере:
     ```
-    INSTALL PLUGIN rpl_semi_sync_master SONAME 'semisync_master.so';
+    INSTALL PLUGIN rpl_semi_sync_master SONAME "semisync_master.so";
     ```
 - #### Устанавливаем semisync плагин на обоих слейвах:
     ```
-    INSTALL PLUGIN rpl_semi_sync_slave SONAME 'semisync_slave.so';
+    INSTALL PLUGIN rpl_semi_sync_slave SONAME "semisync_slave.so";
     ```
 - #### Проверяем на всех хостах, установлен ли плагин:
     ```
