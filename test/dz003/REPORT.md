@@ -104,7 +104,7 @@ binlog_do_db = app
     ```
     APP_DSN_SLAVE1: mysql_slave1
     ```
-- #### Перезапускаем контейнер с приложением (в моем случае, перезапускаются и базу, но для данного эксперимента это не принципиально) и нагружаем ту же страницу тем же запросом, с помощью wrk:
+- #### Перезапускаем контейнер с приложением и нагружаем ту же страницу тем же запросом, с помощью wrk:
     ```
     sudo make app-reload
     sudo docker run --rm -v /root/scripts:/scripts williamyeh/wrk -t1 -c10 -d5m --timeout 30s http://localhost:8080/search -s /scripts/post.lua -- debug true
