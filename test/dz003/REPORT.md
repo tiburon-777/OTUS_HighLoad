@@ -136,22 +136,26 @@ binlog_do_db = app
     binlog-checksum=crc32
     ```
 ### 7. Включить GTID.
-- #### Добавляем в my.cnf мастера и обоих слейвов, строки:
+- #### Добавляем в my.cnf мастера, строки:
     ```
     gtid-mode=on
     enforce-gtid-consistency=true
     ```
+- #### Добавляем в my.cnf обоих слейвов, строки:
+    ```
+    gtid-mode=on
+    enforce-gtid-consistency=true
+    binlog-rows-query-log_events=1
+    ```
 ### 8. Настроить полусинхронную репликацию.
 - #### Включаем динамическую загрузку модулей и полусинхронную репликацию с таймаутом 1с в my.cnf на мастере:
     ```
-    have_dynamic_loading=YES
     rpl_semi_sync_master_enabled=1
     rpl_semi_sync_master_timeout=1000
     ```
 - #### Включаем динамическую загрузку модулей и полусинхронную репликацию в my.cnf на обоих слейвах:
     ```
-    have_dynamic_loading=YES
-    rpl_semi_sync_master_enabled=1
+    rpl_semi_sync_slave_enabled=1
     ```
 - #### Устанавливаем semisync плагин на мастере:
     ```
