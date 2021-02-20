@@ -150,12 +150,12 @@ binlog_do_db = app
 ### 8. Настроить полусинхронную репликацию.
 - #### Включаем динамическую загрузку модулей и полусинхронную репликацию с таймаутом 1с в my.cnf на мастере:
     ```
-    rpl_semi_sync_master_enabled=1
-    rpl_semi_sync_master_timeout=1000
+    loose-rpl_semi_sync_master_enabled=1
+    loose-rpl_semi_sync_master_timeout=1000
     ```
 - #### Включаем динамическую загрузку модулей и полусинхронную репликацию в my.cnf на обоих слейвах:
     ```
-    rpl_semi_sync_slave_enabled=1
+    loose-rpl_semi_sync_slave_enabled=1
     ```
 - #### Устанавливаем semisync плагин на мастере:
     ```

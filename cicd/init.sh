@@ -39,7 +39,17 @@ start_slave_cmd+="$start_slave_stmt"
 start_slave_cmd+='"'
 
 docker exec mysql_slave1 sh -c "$start_slave_cmd"
+echo "Checking slave1 status"
 docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW SLAVE STATUS \G' | grep Slave_"
+echo "Checking slave1 GTID mode"
+sudo docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW VARIABLES' | grep gtid"
+echo "Checking slave1 semisync"
+sudo docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW VARIABLES' | grep semi_sync"
 
 docker exec mysql_slave2 sh -c "$start_slave_cmd"
+echo "Checking slave2 status"
 docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW SLAVE STATUS \G' | grep Slave_"
+echo "Checking slave2 GTID mode"
+sudo docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW VARIABLES' | grep gtid"
+echo "Checking slave2 semisync"
+sudo docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW VARIABLES' | grep semi_sync"
