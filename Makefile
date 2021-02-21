@@ -9,6 +9,7 @@ app-down:
 app-reload: app-down app-up
 
 db-up:
+	rm -rf /opt/mysql_master/* ; \
 	rm -rf /opt/mysql_slave1/* ; \
 	rm -rf /opt/mysql_slave2/* ; \
 	docker-compose -f ./cicd/dc_db.yml up -d --build ; \
@@ -16,6 +17,12 @@ db-up:
 
 db-down:
 	docker-compose -f ./cicd/dc_db.yml down
+
+client-up:
+	docker-compose -f ./cicd/dc_client.yml up -d --build
+
+client-down:
+	docker-compose -f ./cicd/dc_client.yml down
 
 prom-up:
 	docker-compose -f ./test/monitor/docker-compose.yml up -d --build

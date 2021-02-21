@@ -1,0 +1,13 @@
+version: '3'
+services:
+
+  mysql_client:
+    image: mysql:5.7
+    hostname: "mysql_client"
+    container_name: mysql_client
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PORT: 3306
+    volumes:
+      - ./../test/dz003/scripts:/scripts

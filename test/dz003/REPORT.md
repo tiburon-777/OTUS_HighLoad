@@ -174,7 +174,53 @@ binlog_do_db = app
     sudo make app-up
     ```
 ### 9. Создать нагрузку на запись в любую тестовую таблицу. На стороне, которой нагружаем считать, сколько строк мы успешно записали.
+- #### Запускаем кластер:
+    ```
+    sudo make db-up
+    ```
+- #### Запускаем контейнер с mysql-client:
+    ```
+    sudo make client-up
+    ```
+- #### Заходим внутрь контейнера и запускаем скрипт:
+    ```
+    /scripts/dz003_2.sh
+    ```
 ### 10. С помощью kill -9 убиваем мастер MySQL.
+- #### Т.к. образ mysql:5.7 не содержит команды ps, не мудрим и грохаем контейнер с мастером:
+    ```
+    sudo docker kill mysql_master
+    ```
 ### 11. Заканчиваем нагрузку на запись.
+- #### Возвращаемся в контейнер клиента и запоминаем, знаение счетчика строк успешно записанных в таблицу мастера
+  В нашем случае, скрипт тормазнул после добавления 10233 строк
 ### 12. Выбираем самый свежий слейв. Промоутим его до мастера. Переключаем на него второй слейв.
-### 13. Проверяем, есть ли потери транзакций.
+- #### Определяем свежайшую реплику:
+    ```
+    sudo docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW SLAVE STATUS\G' | grep Master_Log_File"
+    sudo docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e 'SHOW SLAVE STATUS\G' | grep Master_Log_File"
+    ```
+  В нашем случае оба слейва остановились на mysql-bin.000003, поэтому мастером будем промоутить mysql_slave1
+  
+  З.Ы. Еще можно было бы поиграть с [отложенной репликацией](https://dev.mysql.com/doc/refman/5.6/en/replication-delayed.html), но не в рамках данного эксперимента
+
+- #### Останавливаем на всех слейвах потоки получения обновлений бинарного лога:
+    ```
+    sudo docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e 'STOP SLAVE IO_THREAD; SHOW PROCESSLIST;'"
+    sudo docker exec mysql_slave2 sh -c "export MYSQL_PWD=root; mysql -u root -e 'STOP SLAVE IO_THREAD; SHOW PROCESSLIST;'"
+    ```
+- #### Полностью останавливаем слэйв который будем промоутить до мастера и сбрасываем его бинлог:
+    ```
+    sudo docker exec mysql_slave1 sh -c "export MYSQL_PWD=root; mysql -u root -e 'STOP SLAVE; RESET MASTER;'"
+    ```
+- #### Оставшийся слэйв переключаем на новый мастер:
+    ```
+    sudo docker exec {slave_to_promote} sh -c "export MYSQL_PWD=root; mysql -u root -e 'STOP SLAVE; CHANGE MASTER TO MASTER_HOST='{slave_to_promote}'; START SLAVE;'"
+    ```
+### 13. Проверяем, есть ли потери транзакций:
+-  #### Проверяем количество строк в тестовой таблице на новом мастере:
+    ```
+    sudo docker exec {slave_to_promote} sh -c "export MYSQL_PWD=root; mysql -u root -e 'USE app; SELECT count(*) from test;'"
+    ```
+   В нашем случае, потерь транзакций не наблюдается. В таблице нового мастера те же 10233 строки.
+  
