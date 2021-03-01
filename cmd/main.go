@@ -25,7 +25,7 @@ func init() {
 func main() {
 	log.Println("Starting...")
 	m := martini.Classic()
-	app, err := application.New("", "APP")
+	app, err := application.New("application.conf", "APP")
 	if err != nil {
 		log.Fatal(fmt.Errorf("can't build app: %w", err).Error())
 	}
@@ -71,6 +71,11 @@ func main() {
 
 	m.Get("/search", handlers.GetUserList)
 	m.Post("/search", handlers.PostUserSearch)
+
+	m.Get("/addPost", auth.LoginRequired, handlers.GetAddPost)
+	m.Post("/addPost", auth.LoginRequired, handlers.PostAddPost)
+
+	m.Get("/feed", auth.LoginRequired, handlers.GetFeed)
 
 	m.NotFound(func(r render.Render) {
 		r.HTML(404, "404", nil)

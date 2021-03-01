@@ -25,6 +25,12 @@
         <p>You now live in <b>{{ .user.City }}</b></p>
         <p>You interests is: <b>{{ .user.Interests }}</b></p>
 
+        <h2>Available actions:</h2>
+        <input type="button" onclick="location.href='/addPost';" value="Create Post" />
+        <input type="button" onclick="location.href='/feed';" value="Friend Feed" />
+        <input type="button" onclick="location.href='/list';" value="User list" />
+        <input type="button" onclick="location.href='/logout';" value="Logout" /><br />
+
         <h2> You have friends:</h2>
         <table>
             <thead>
@@ -49,8 +55,11 @@
             </tbody>
         </table>
 
-        <h2>Available actions:</h2>
-        <input type="button" onclick="location.href='/list';" value="User list" />
-        <input type="button" onclick="location.href='/logout';" value="Logout" /><br />
+        <h2> Your posts:</h2>
+            {{ range $post:=.posts }}
+                <a><b>{{ $post.Subject }}</b><br/><a>{{ $post.Body }}</a>
+                <br/><br/>
+            {{ end }}
+
     </body>
 </html>

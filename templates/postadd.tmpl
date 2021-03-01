@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.3/moment.min.js"></script>
+    </head>
+    <body>
+        <h2>Create post</h2>
+        <p style="color: red;"><b>{{ .msg }}</b></p>
+        <form method="POST">
+            <table>
+                <tr>
+                    <td>Тема</td>
+                    <td><input type="text" name="subj" /></td>
+                </tr>
+                <tr>
+                    <td>Текст</td>
+                    <td><textarea rows="10" cols="45" name="body"></textarea></td>
+                </tr>
+            </table>
+            <button>Отправить</button>
+        </form>
+    </body>
+</html>

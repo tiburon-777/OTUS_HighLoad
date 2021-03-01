@@ -84,6 +84,18 @@ func dbInit(db *sql.DB) error {
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8`); err != nil {
 		return err
 	}
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS posts (
+		Id INT(11) NOT NULL AUTO_INCREMENT,
+		Author INT(11) NULL DEFAULT NULL,
+		Created TIMESTAMP NULL DEFAULT NULL,
+		Subject VARCHAR(50) NULL DEFAULT NULL,
+		Body MEDIUMTEXT NULL DEFAULT NULL,
+		PRIMARY KEY (Id) USING BTREE,
+		INDEX AuthorID (author) USING BTREE,
+		CONSTRAINT AuthorID FOREIGN KEY (author) REFERENCES app.users (Id) ON UPDATE RESTRICT ON DELETE RESTRICT
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE utf8_unicode_ci`); err != nil {
+		return err
+	}
 	log.Println("All tables exists")
 	return nil
 }
