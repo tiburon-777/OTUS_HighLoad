@@ -2,12 +2,13 @@ package dataset
 
 import (
 	"database/sql"
-	"github.com/mdigger/translit"
 	"log"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mdigger/translit"
 )
 
 type Person struct {
@@ -53,7 +54,7 @@ func FillDB(db *sql.DB, lim int) {
 	}
 	uCount = lim - uCount
 	if uCount <= 0 {
-		log.Printf("Ok. We have more users then %s.", lim)
+		log.Printf("Ok. We have more users then %d.", lim)
 	}
 	log.Printf("Try to generate %d rows and fill the DB...", uCount)
 	for i := 1; i < uCount; i++ {

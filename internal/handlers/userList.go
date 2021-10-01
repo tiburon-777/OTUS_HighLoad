@@ -1,11 +1,13 @@
 package handlers
 
 import (
-	"github.com/codegangsta/martini-contrib/render"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 	"net/http"
 	"time"
+
+	"github.com/codegangsta/martini-contrib/render"
+
+	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 )
 
 func GetUserList(app application.App, r render.Render) {
@@ -46,8 +48,8 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 				WHERE
 					relations.userId=?)
 			AND ( users.Name LIKE concat(?, '%') AND users.Surname LIKE concat(?, '%') )`,
-		user.(*auth.UserModel).Id,
-		user.(*auth.UserModel).Id,
+		user.(*auth.UserModel).ID,
+		user.(*auth.UserModel).ID,
 		postName,
 		postSurname,
 	)
@@ -56,7 +58,7 @@ func PostUserList(app application.App, user auth.User, r render.Render, req *htt
 	}
 	defer results.Close()
 	for results.Next() {
-		err = results.Scan(&tmp.Id, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
+		err = results.Scan(&tmp.ID, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
 		if err != nil {
 			err500("can't scan result from DB: ", err, r)
 		}
@@ -109,7 +111,7 @@ func PostUserSearch(app application.App, r render.Render, req *http.Request) {
 	}
 	defer results.Close()
 	for results.Next() {
-		err = results.Scan(&tmp.Id, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
+		err = results.Scan(&tmp.ID, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
 		if err != nil {
 			err500("can't scan result from DB: ", err, r)
 		}

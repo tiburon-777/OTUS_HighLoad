@@ -1,5 +1,37 @@
 cdir = $(shell pwd)
 
+check-lint:
+	which golangci-lint || (GO111MODULE=off go get -u github.com/golangci/golangci-lint/cmd/golangci-lint)
+
+lint: check-lint
+	@echo "+ $@"
+	@golangci-lint run -v --timeout 3m \
+     --fast \
+     --issues-exit-code=0 \
+     --print-issued-lines=false \
+     --enable=gocognit \
+     --enable=gocritic \
+     --enable=prealloc \
+     --enable=unparam \
+     --enable=nakedret \
+     --enable=scopelint \
+     --disable=deadcode  \
+     --disable=unused  \
+     --enable=gocyclo \
+     --enable=golint \
+     --enable=varcheck \
+       --enable=structcheck \
+       --enable=maligned \
+       --enable=errcheck \
+       --enable=dupl \
+       --enable=ineffassign \
+       --enable=interfacer \
+       --enable=unconvert \
+       --enable=goconst \
+       --enable=gosec \
+       --enable=megacheck \
+     ./...
+
 app-up:
 	docker-compose -f ./cicd/dc_app.yml up -d --build
 

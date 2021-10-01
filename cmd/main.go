@@ -2,20 +2,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/codegangsta/martini"
-	"github.com/codegangsta/martini-contrib/binding"
-	"github.com/codegangsta/martini-contrib/render"
-	"github.com/codegangsta/martini-contrib/sessions"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/handlers"
-	"github.com/tiburon-777/OTUS_HighLoad/pkg/dataset"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/codegangsta/martini"
+	"github.com/codegangsta/martini-contrib/binding"
+	"github.com/codegangsta/martini-contrib/render"
+	"github.com/codegangsta/martini-contrib/sessions"
+	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/handlers"
+	"github.com/tiburon-777/OTUS_HighLoad/pkg/dataset"
 )
 
 func init() {
@@ -40,7 +42,7 @@ func main() {
 		Extensions: []string{".tmpl"},
 	}))
 
-	auth.RedirectUrl = "/login"
+	auth.RedirectURL = "/login"
 	auth.RedirectParam = "next"
 
 	m.Get("/404", func(r render.Render) {

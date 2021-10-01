@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/codegangsta/martini-contrib/render"
+
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
-	"time"
 )
 
 func GetFeed(app application.App, r render.Render, user auth.User) {
@@ -16,7 +18,7 @@ func GetFeed(app application.App, r render.Render, user auth.User) {
 	var post Post
 	var posts []Post
 	var results, err = app.DBMaster.Query(`SELECT
-			posts.Id AS Id,
+			posts.ID AS Id,
 			users.Username AS Author,
 			posts.Created AS Created,
 			posts.Subject AS Subject,
@@ -28,13 +30,13 @@ func GetFeed(app application.App, r render.Render, user auth.User) {
 			AND posts.Author=relations.friendId
 			AND relations.userId=?
 		ORDER by Created DESC`,
-		user.(*auth.UserModel).Id)
+		user.(*auth.UserModel).ID)
 	if err != nil || results == nil {
 		err500("can't get feed from DB: ", err, r)
 	}
 	defer results.Close()
 	for results.Next() {
-		err = results.Scan(&post.Id, &post.Author, &tmpTime, &post.Subject, &post.Body)
+		err = results.Scan(&post.ID, &post.Author, &tmpTime, &post.Subject, &post.Body)
 		if err != nil {
 			err500("can't scan result from DB: ", err, r)
 		}

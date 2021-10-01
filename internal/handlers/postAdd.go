@@ -1,11 +1,13 @@
 package handlers
 
 import (
-	"github.com/codegangsta/martini-contrib/render"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 	"net/http"
 	"time"
+
+	"github.com/codegangsta/martini-contrib/render"
+
+	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 )
 
 func GetAddPost(app application.App, r render.Render) {
@@ -17,7 +19,7 @@ func PostAddPost(app application.App, user auth.User, r render.Render, req *http
 	postBody := req.FormValue("body")
 	var results, err = app.DBMaster.Query(`INSERT INTO posts (Author, Created, Subject, Body) VALUES (
         ?, ?, ?, ?)`,
-        user.(*auth.UserModel).Id,
+        user.(*auth.UserModel).ID,
         time.Now().Format("2006-01-02 15:04:05"),
 		postSubj,
 		postBody,

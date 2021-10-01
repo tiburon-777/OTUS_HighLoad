@@ -2,12 +2,13 @@ package auth
 
 import (
 	"fmt"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 	"time"
+
+	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
 )
 
 type UserModel struct {
-	Id            int64     `db:"id" form:"id"`
+	ID            int64     `db:"id" form:"id"`
 	Username      string    `db:"username" form:"username"`
 	Password      string    `db:"password" form:"password"`
 	Name          string    `db:"name" form:"name"`
@@ -45,11 +46,11 @@ func (u *UserModel) IsAuthenticated() bool {
 	return u.authenticated
 }
 
-func (u *UserModel) UniqueId() interface{} {
-	return u.Id
+func (u *UserModel) UniqueID() interface{} {
+	return u.ID
 }
 
-func (u *UserModel) GetById(app application.App, id interface{}) error {
+func (u *UserModel) GetByID(app application.App, id interface{}) error {
 	var v string
 	query := fmt.Sprintf("SELECT username, name, surname, birthdate, gender, city, interests FROM users WHERE id=%d", id)
 	err := app.DBMaster.QueryRow(query).Scan(&u.Username, &u.Name, &u.Surname, &v, &u.Gender, &u.City, &u.Interests)
@@ -60,6 +61,6 @@ func (u *UserModel) GetById(app application.App, id interface{}) error {
 	if err != nil {
 		return err
 	}
-	u.Id = id.(int64)
+	u.ID = id.(int64)
 	return nil
 }

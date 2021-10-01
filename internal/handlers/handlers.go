@@ -2,19 +2,22 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/codegangsta/martini-contrib/render"
-	"github.com/codegangsta/martini-contrib/sessions"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
-	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/codegangsta/martini-contrib/render"
+	"github.com/codegangsta/martini-contrib/sessions"
+	"golang.org/x/crypto/bcrypt"
+	// MySQL driver
+	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
+	"github.com/tiburon-777/OTUS_HighLoad/internal/auth"
 )
 
 type Post struct{
-	Id		int `db:"Id"`
+	ID		int `db:"Id"`
 	Author	string `db:"Author"`
 	Created	time.Time `db:"Created"`
 	Subject	string `db:"Subject"`
@@ -42,13 +45,13 @@ func GetHome(app application.App, r render.Render, user auth.User) {
 			relations.friendId=users.Id
 			AND relations.userId=?
 		GROUP BY users.Id`,
-		user.(*auth.UserModel).Id)
+		user.(*auth.UserModel).ID)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
 	}
 	defer results.Close()
 	for results.Next() {
-		err = results.Scan(&tmp.Id, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
+		err = results.Scan(&tmp.ID, &tmp.Name, &tmp.Surname, &tmpTime, &tmp.Gender, &tmp.City)
 		if err != nil {
 			err500("can't scan result from DB: ", err, r)
 		}
@@ -60,13 +63,13 @@ func GetHome(app application.App, r render.Render, user auth.User) {
 
 	var post Post
 	var posts []Post
-	results, err = app.DBMaster.Query(`SELECT Id, Created, Subject, Body FROM posts WHERE Author=? ORDER BY Created DESC;`, user.(*auth.UserModel).Id)
+	results, err = app.DBMaster.Query(`SELECT Id, Created, Subject, Body FROM posts WHERE Author=? ORDER BY Created DESC;`, user.(*auth.UserModel).ID)
 	if err != nil || results == nil {
 		err500("can't get user list from DB: ", err, r)
 	}
 	defer results.Close()
 	for results.Next() {
-		err = results.Scan(&post.Id, &tmpTime, &post.Subject, &post.Body)
+		err = results.Scan(&post.ID, &tmpTime, &post.Subject, &post.Body)
 		if err != nil {
 			err500("can't scan result from DB: ", err, r)
 		}
@@ -122,25 +125,24 @@ func PostSignup(app application.App, postedUser auth.UserModel, r render.Render)
 
 func PostLogin(app application.App, session sessions.Session, postedUser auth.UserModel, r render.Render, req *http.Request) {
 	user := auth.UserModel{}
-	err1 := app.DBMaster.QueryRow("SELECT id, password FROM users WHERE username=?", postedUser.Username).Scan(&user.Id, &user.Password)
+	err1 := app.DBMaster.QueryRow("SELECT id, password FROM users WHERE username=?", postedUser.Username).Scan(&user.ID, &user.Password)
 	err2 := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(postedUser.Password))
 	if err1 != nil || err2 != nil {
 		doc := map[string]interface{}{
 			"msg": "Wrong user or password. You may sign in.",
 		}
 		r.HTML(200, "login", doc)
-		r.Redirect(auth.RedirectUrl)
-		return
-	} else {
-		err := auth.AuthenticateSession(session, &user)
-		if err != nil {
-			err500("can't auth session: ", err, r)
-		}
-		params := req.URL.Query()
-		redirect := params.Get(auth.RedirectParam)
-		r.Redirect(redirect)
+		r.Redirect(auth.RedirectURL)
 		return
 	}
+	err := auth.AuthenticateSession(session, &user)
+	if err != nil {
+		err500("can't auth session: ", err, r)
+	}
+	params := req.URL.Query()
+	redirect := params.Get(auth.RedirectParam)
+	r.Redirect(redirect)
+	return
 }
 
 func str2Time(s string, r render.Render) time.Time {
@@ -152,7 +154,7 @@ func str2Time(s string, r render.Render) time.Time {
 }
 
 func err500(s string, err error, r render.Render) {
-	e := fmt.Errorf("s% %w", s, err)
+	e := fmt.Errorf("%s %w", s, err)
 	log.Println(e)
 	doc := map[string]interface{}{
 		"Error": e,

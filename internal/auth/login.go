@@ -2,19 +2,21 @@ package auth
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/codegangsta/martini"
 	"github.com/codegangsta/martini-contrib/render"
 	"github.com/codegangsta/martini-contrib/sessions"
+
 	"github.com/tiburon-777/OTUS_HighLoad/internal/application"
-	"log"
-	"net/http"
 )
 
 // These are the default configuration values for this package. They
 // can be set at anytime, probably during the initial setup of Martini.
 var (
-	// RedirectUrl should be the relative URL for your login route
-	RedirectUrl string = "/login"
+	// RedirectURL should be the relative URL for your login route
+	RedirectURL string = "/login"
 
 	// RedirectParam is the query string parameter that will be set
 	// with the page the user was trying to visit before they were
@@ -39,10 +41,10 @@ type User interface {
 	Logout()
 
 	// Return the unique identifier of this user object
-	UniqueId() interface{}
+	UniqueID() interface{}
 
 	// Populate this user object with values
-	GetById(app application.App, id interface{}) error
+	GetByID(app application.App, id interface{}) error
 }
 
 // SessionUser will try to read a unique user ID out of the session. Then it tries
@@ -53,11 +55,11 @@ type User interface {
 // user type.
 func SessionUser(newUser func() User) martini.Handler {
 	return func(s sessions.Session, c martini.Context, l *log.Logger, app application.App) {
-		userId := s.Get(SessionKey)
+		userID := s.Get(SessionKey)
 		user := newUser()
 
-		if userId != nil {
-			err := user.GetById(app, userId)
+		if userID != nil {
+			err := user.GetByID(app, userID)
 			if err != nil {
 				l.Printf("Login Error: %v\n", err)
 			} else {
@@ -88,8 +90,8 @@ func Logout(s sessions.Session, user User) {
 // authenticated, they will be redirected to /login with the "next" get parameter
 // set to the attempted URL.
 func LoginRequired(r render.Render, user User, req *http.Request) {
-	if user.IsAuthenticated() == false {
-		path := fmt.Sprintf("%s?%s=%s", RedirectUrl, RedirectParam, req.URL.Path)
+	if !user.IsAuthenticated() {
+		path := fmt.Sprintf("%s?%s=%s", RedirectURL, RedirectParam, req.URL.Path)
 		r.Redirect(path, 302)
 	}
 }
@@ -97,6 +99,6 @@ func LoginRequired(r render.Render, user User, req *http.Request) {
 // UpdateUser updates the User object stored in the session. This is useful incase a change
 // is made to the user model that needs to persist across requests.
 func UpdateUser(s sessions.Session, user User) error {
-	s.Set(SessionKey, user.UniqueId())
+	s.Set(SessionKey, user.UniqueID())
 	return nil
 }

@@ -3,9 +3,11 @@ package application
 import (
 	"database/sql"
 	"fmt"
-	"github.com/tiburon-777/OTUS_HighLoad/internal/models"
-	"github.com/tiburon-777/modules/core/config"
 	"log"
+
+	"github.com/tiburon-777/modules/core/config"
+
+	"github.com/tiburon-777/OTUS_HighLoad/internal/models"
 )
 
 type App struct {
@@ -18,7 +20,7 @@ type App struct {
 func New(configFile, envPrefix string) (app App, err error) {
 	app.Config, err = configure(configFile, envPrefix)
 	if err != nil {
-		return App{}, fmt.Errorf("can't apply config: %w\n", err)
+		return App{}, fmt.Errorf("can't apply config: %w", err)
 	}
 
 	app.DBMaster, err = sql.Open("mysql", app.Config.DSN.User+":"+app.Config.DSN.Pass+"@tcp("+app.Config.DSN.Master+":"+app.Config.DSN.Port+")/"+app.Config.DSN.Base+"?charset=utf8&collation=utf8_unicode_ci")
