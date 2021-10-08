@@ -1,4 +1,4 @@
-## Домашние задания по курсу
+## Домашние задания по курсу [Highload Architect](https://otus.ru/lessons/highloadarchitect/)
 ### [01. Заготовка для социальной сети](test/dz001/README.md) (ЗАЧЕТ)
 ### [02. Производительность индексов](test/dz002/README.md) (ЗАЧЕТ)
 ### [03. Полусинхронная репликация](test/dz003/README.md) (ЗАЧЕТ)
